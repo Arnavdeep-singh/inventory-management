@@ -9,9 +9,9 @@ function Signin() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signInUser } = UserAuth();
+  const { signInUser } = UserAuth()!;
 
-  const handleSignin = async (e) => {
+  const handleSignin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
@@ -23,7 +23,7 @@ function Signin() {
         setError(result.error || 'Failed to sign in');
       }
     } catch (error) {
-      setError(error.message || 'An error occurred');
+      setError((error as Error).message || 'An error occurred');
     } finally {
       setLoading(false);
     }

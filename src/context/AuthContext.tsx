@@ -1,13 +1,21 @@
 import { createContext, useEffect, useState, useContext } from 'react';
-import { supabase } from '../supabaseClient';
+import { supabase } from '../supabaseClient.ts';
+import type { Session } from '@supabase/supabase-js';
 
-const AuthContext = createContext();
+interface AuthContextType {
+    session: Session | null | undefined;
+    signUpNewUser: (params: { username: string; email: string; password: string }) => Promise<{ success: boolean; data?: any; error?: string }>;
+    signInUser: (params: { username: string; password: string }) => Promise<{ success: boolean; data?: any; error?: string }>;
+    signOutUser: () => Promise<{ success: boolean; error?: string } | void>;
+}
 
-export const AuthContextProvider = ({ children }) => {
-    const [session, setSession] = useState(undefined);
+const AuthContext = createContext<AuthContextType | null>(null)
+
+export const AuthContextProvider = ({ children }: { children: React.ReactNode }) => {
+    const [session, setSession] = useState<Session | null | undefined>(undefined);
 
     // Sign up
-    const signUpNewUser = async ({username, email, password}) => {
+    const signUpNewUser = async ({ username, email, password }: { username: string, email: string, password: string }) => {
         try {
             const { data, error } = await supabase.auth.signUp({
                 email: email.toLowerCase(),
@@ -20,7 +28,6 @@ export const AuthContextProvider = ({ children }) => {
             });
             if (error) throw error;
 
-            // Insert username -> email mapping into profiles table
             if (data.user) {
                 const { error: profileError } = await supabase
                     .from('profiles')
@@ -32,20 +39,18 @@ export const AuthContextProvider = ({ children }) => {
                 
                 if (profileError) {
                     console.error('Error creating profile:', profileError.message);
-                    // Don't throw, as the user was created successfully
                 }
             }
 
             return {success: true, data};
         } catch (error) {
-            console.error('Error signing up:', error.message);
-            return {success: false, error: error.message};
+            console.error('Error signing up:', (error as Error).message);
+            return {success: false, error: (error as Error).message};
         }
     };
 
-    const signInUser = async ({username, password}) => {
+    const signInUser = async ({ username, password }: { username: string, password: string }) => {
         try {
-            // Query the user by username from the profiles table (case-insensitive)
             const { data: profileData, error: profileError } = await supabase
                 .from('profiles')
                 .select('email')
@@ -72,8 +77,8 @@ export const AuthContextProvider = ({ children }) => {
             console.log("Sign in success", data);
             return {success: true, data};
         } catch (error) {
-            console.error('Error signing in:', error.message);
-            return {success: false, error: error.message};
+            console.error('Error signing in:', (error as Error).message);
+            return {success: false, error: (error as Error).message};
         }
     };
 
@@ -82,23 +87,20 @@ export const AuthContextProvider = ({ children }) => {
             setSession(session);
         });
 
-        supabase.auth.onAuthStateChange((_event, session) => {
+        supabase.auth.onAuthStateChange((_event: string, session: Session | null) => {
             setSession(session);
         });
     }, []);
 
-
-    // Sign out
     const signOutUser = async () => {
         try {
-            const { error } = supabase.auth.signOut();
+            const { error } = await supabase.auth.signOut();
             if (error) throw error;
         } catch (error) {
-            console.error('Error signing out:', error.message);
-            return {success: false, error: error.message};
+            console.error('Error signing out:', (error as Error).message);
+            return {success: false, error: (error as Error).message};
         }
     };
-
 
     return (
         <AuthContext.Provider value={{ session, signUpNewUser, signInUser, signOutUser }}>

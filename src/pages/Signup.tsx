@@ -11,9 +11,9 @@ function Signup() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signUpNewUser } = UserAuth();
+  const { signUpNewUser } = UserAuth()!;
 
-  const handleSignUp = async (e) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -32,7 +32,7 @@ function Signup() {
         setError(result.error || 'Failed to create account');
       }
     } catch (error) {
-      setError(error.message || 'An error occurred');
+      setError((error as Error).message || 'An error occurred');
     } finally {
       setLoading(false);
     }

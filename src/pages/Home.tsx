@@ -5,9 +5,9 @@ import Footer from '../components/Footer';
 
 function Home() {
   const navigate = useNavigate();
-  const { signOutUser } = UserAuth();
+  const { signOutUser } = UserAuth()!;
 
-  const handleSignOut = async (e) => {
+  const handleSignOut = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await signOutUser();
